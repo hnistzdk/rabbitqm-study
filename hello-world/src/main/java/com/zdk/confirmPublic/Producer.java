@@ -1,6 +1,7 @@
 package com.zdk.confirmPublic;
 
 import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.ConfirmCallback;
 import com.zdk.utils.RabbitMQUtils;
 
 import java.nio.charset.StandardCharsets;
@@ -12,7 +13,7 @@ import java.util.UUID;
  */
 public class Producer {
 
-    private static final int MESSAGE_NUM = 5000;
+    private static final int MESSAGE_NUM = 1000;
 
     public static void main(String[] args) throws Exception {
 //        publicSingleMessageConfirm();
@@ -64,7 +65,7 @@ public class Producer {
             channel.basicPublish("", queueName, null, (i+"").getBytes(StandardCharsets.UTF_8));
             outstandingMessageCount++;
             //到达设置的大小后统一确认
-            if (outstandingMessageCount == batchSize) {
+            if (outstandingMessageCount+1 == batchSize) {
                 channel.waitForConfirms();
                 outstandingMessageCount = 0;
             }
@@ -75,5 +76,35 @@ public class Producer {
         }
         long end = System.currentTimeMillis();
         System.out.println("发送"+MESSAGE_NUM+"条消息批量确认耗时："+(end-start)+"ms");
+    }
+
+    /**
+     * 异步发布确认
+     * 需要在发送消息之前设定一个监听器，提供已确认和未确认的回调函数来处理消息
+     * @throws Exception
+     */
+    public static void publicAsyncMessageConfirm() throws Exception {
+        Channel channel = RabbitMQUtils.getChannel();
+        String queueName = UUID.randomUUID().toString();
+        //生成一个队列
+        channel.queueDeclare(queueName,false,false, false, null);
+
+        //开启发布确认
+        channel.confirmSelect();
+        ConfirmCallback ackCallback = (deliveryTag, multiple)->{
+            System.out.println("序号为："+deliveryTag+"的消息已被确认");
+        };
+        ConfirmCallback nackCallback = (deliveryTag, multiple)->{
+            System.out.println("序号为："+deliveryTag+"的消息未被确认");
+        };
+        channel.addConfirmListener(ackCallback,nackCallback);
+
+        long start = System.currentTimeMillis();
+        for (int i = 0; i < MESSAGE_NUM; i++) {
+            channel.basicPublish("", queueName, null, (i+"").getBytes(StandardCharsets.UTF_8));
+        }
+
+        long end = System.currentTimeMillis();
+        System.out.println("发送"+MESSAGE_NUM+"条消息异步确认耗时："+(end-start)+"ms");
     }
 }
