@@ -1,0 +1,20 @@
+spring:
+  rabbitmq:
+    host: 211.69.238.77
+    port: 5672
+    username: admin
+    password: 123456
+    template:
+      # 设置成true 消息路由失败通知监听者，而不是将消息丢弃
+      mandatory: true
+    #设置消息确认的模式  发布消息成功到交换器后会触发回调方法
+    publisher-confirm-type: correlated
+    #消息退回
+    publisher-returns: true
+
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+
+server:
+  port: 8082
