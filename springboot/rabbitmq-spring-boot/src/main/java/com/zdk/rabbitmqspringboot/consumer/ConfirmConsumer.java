@@ -1,6 +1,7 @@
 package com.zdk.rabbitmqspringboot.consumer;
 
 import com.zdk.rabbitmqspringboot.config.ConfirmConfig;
+import com.zdk.rabbitmqspringboot.config.PriorityQueueConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -28,5 +29,15 @@ public class ConfirmConsumer {
     public void receiveWarningMessage(Message message){
         String msg = new String(message.getBody());
         log.warn("告警队列{} 接收到消息:{}",ConfirmConfig.WARNING_QUEUE_NAME,msg);
+    }
+
+    /**
+     * 接收优先队列消息
+     * @param message
+     */
+    @RabbitListener(queues = PriorityQueueConfig.PRIORITY_QUEUE_NAME)
+    public void receivePriorityMessage(Message message){
+        String msg = new String(message.getBody());
+        log.warn("从优先队列{} 接收到消息:{}",PriorityQueueConfig.PRIORITY_QUEUE_NAME,msg);
     }
 }

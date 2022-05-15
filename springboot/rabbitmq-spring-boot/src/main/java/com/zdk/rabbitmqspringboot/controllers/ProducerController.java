@@ -2,6 +2,7 @@ package com.zdk.rabbitmqspringboot.controllers;
 
 import com.zdk.rabbitmqspringboot.callback.MessageCallback;
 import com.zdk.rabbitmqspringboot.config.ConfirmConfig;
+import com.zdk.rabbitmqspringboot.config.PriorityQueueConfig;
 import io.swagger.annotations.Api;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.connection.CorrelationData;
@@ -74,5 +75,20 @@ public class ProducerController {
         CorrelationData correlationData3 = new CorrelationData("11");
         rabbitTemplate.convertAndSend(ConfirmConfig.CONFIRM_EXCHANGE_NAME,ConfirmConfig.CONFIRM_ROUTING_KEY+"22",message,correlationData3);
         log.info(ConfirmConfig.CONFIRM_EXCHANGE_NAME+"发送消息内容为:{}",message);
+    }
+
+    @GetMapping("/sendPriority")
+    public void sendPriorityMessage(){
+        for (int i = 1; i <= 10; i++) {
+            String message = "info" + i;
+            if (i == 5){
+                rabbitTemplate.convertAndSend(PriorityQueueConfig.PRIORITY_EXCHANGE_NAME,"priority",message, msg->{
+                    msg.getMessageProperties().setPriority(10);
+                    return msg;
+                });
+            }else{
+                rabbitTemplate.convertAndSend(PriorityQueueConfig.PRIORITY_EXCHANGE_NAME,"priority",message);
+            }
+        }
     }
 }
